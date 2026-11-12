@@ -1,0 +1,2 @@
+# Fins de ligne LF partout : le code tourne aussi sous Linux (Docker, VPS).
+* text=auto eol=lf

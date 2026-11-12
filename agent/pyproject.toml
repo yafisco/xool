@@ -1,0 +1,24 @@
+[project]
+name = "xool-agent"
+version = "0.1.0"
+description = "Agent Xool : collecte et envoi des métriques"
+requires-python = ">=3.12"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "ruff>=0.17.5",
+]
+
+[tool.uv]
+# Le cache uv (C:) et le projet (Y:) sont sur deux disques : pas de liens physiques possibles.
+link-mode = "copy"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+# E/W : style pycodestyle, F : erreurs pyflakes, I : tri des imports,
+# UP : syntaxe Python moderne, B : bugs probables, SIM : simplifications.
+select = ["E", "W", "F", "I", "UP", "B", "SIM"]
