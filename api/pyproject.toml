@@ -3,16 +3,29 @@ name = "xool-api"
 version = "0.1.0"
 description = "API Xool : réception et stockage des métriques"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "asyncpg>=0.32.0",
+    "fastapi>=0.162.5",
+    "pydantic-settings>=2.16.3",
+    "sqlalchemy[asyncio]>=2.1.8",
+    "uvicorn[standard]>=0.54.0",
+]
 
 [dependency-groups]
 dev = [
+    "httpx>=0.28.1",
+    "pytest>=9.2.0",
     "ruff>=0.17.5",
 ]
 
 [tool.uv]
 # Le cache uv (C:) et le projet (Y:) sont sur deux disques : pas de liens physiques possibles.
 link-mode = "copy"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Le paquet `app` n'est pas installé : on ajoute le dossier api/ au chemin d'import.
+pythonpath = ["."]
 
 [tool.ruff]
 line-length = 100

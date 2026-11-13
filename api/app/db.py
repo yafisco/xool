@@ -1,0 +1,31 @@
+"""Connexion asynchrone à PostgreSQL (SQLAlchemy 2 + asyncpg)."""
+
+from collections.abc import AsyncIterator
+from functools import lru_cache
+
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
+
+from app.config import get_settings
+
+
+@lru_cache
+def get_engine() -> AsyncEngine:
+    """Crée le moteur au premier appel : importer ce module n'ouvre aucune connexion."""
+    # pool_pre_ping : teste une connexion avant de la réutiliser (utile après une coupure).
+    return create_async_engine(get_settings().database_url, pool_pre_ping=True)
+
+
+@lru_cache
+def get_session_factory() -> async_sessionmaker[AsyncSession]:
+    return async_sessionmaker(get_engine(), expire_on_commit=False)
+
+
+async def get_session() -> AsyncIterator[AsyncSession]:
+    """Dépendance FastAPI : une session par requête, fermée à la fin."""
+    async with get_session_factory()() as session:
+        yield session
