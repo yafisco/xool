@@ -7,7 +7,8 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:?définir DB_PASSWORD dans .env}
       POSTGRES_DB: ${DB_NAME:-xool}
     ports:
-      - "5432:5432"
+      # 127.0.0.1 : la base n'est joignable que depuis cette machine, pas depuis le réseau local.
+      - "127.0.0.1:5432:5432"
     volumes:
       - dbdata:/var/lib/postgresql/data
     healthcheck:

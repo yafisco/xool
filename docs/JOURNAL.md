@@ -90,8 +90,6 @@ Une entrée par session, la plus récente en haut.
   comment éviter que les deux fichiers divergent.
 - C: n'a plus que 3,4 Go libres après l'installation de Docker (le dossier temporaire de
   l'utilisateur pèse environ 3 Go). Faire du ménage.
-- `docker-compose.yml` publie le port 5432 sur toutes les interfaces (`0.0.0.0`) : la base est
-  joignable depuis le réseau local. Limiter à `127.0.0.1:5432:5432` en développement.
 - `/health` met 60 s à répondre 503 quand la base accepte la connexion sans répondre (délai par
   défaut d'asyncpg). Ajouter un délai de connexion court (5 s) dans `app/db.py`.
 - Au tout premier démarrage, le conteneur `db` passe « healthy » pendant l'initialisation, avant
