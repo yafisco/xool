@@ -4,6 +4,32 @@ Une entrée par session, la plus récente en haut.
 
 ---
 
+## 2026-11-13 — Schéma initial et migrations (session 2)
+
+**Tâche** : T3 terminée
+**Fait** :
+- Alembic initialisé en mode async dans `api/migrations/`, URL lue depuis le `.env` racine
+- `app/models.py` : `organizations`, `agents`, `devices`, `metrics`, dates en `TIMESTAMPTZ`
+- Migration `39c3475fb388` : crée les tables et transforme `metrics` en hypertable
+- `app/security.py` : génération de clé d'agent et hash SHA-256 (D005)
+- `scripts/create_agent.py` : crée organisation + agent, affiche la clé une seule fois
+- Tests sur une base jetable `xool_test` créée par les migrations (14 tests au total)
+- Vérifié à la main : le script affiche une clé et refuse un doublon, `metrics` est une
+  hypertable, `alembic downgrade base` puis `upgrade head` fonctionnent
+- Port 5432 limité à `127.0.0.1` dans `docker-compose.yml`
+
+**Problèmes rencontrés** :
+- Le modèle de migration généré par Alembic utilisait une syntaxe que Ruff refuse
+  (`Union`, `typing.Sequence`) : `script.py.mako` réécrit en syntaxe moderne
+- Alembic ne connaît pas TimescaleDB : la création de l'hypertable est écrite à la main dans la
+  migration, sans index par défaut pour que `alembic check` reste propre
+
+**Prochaine étape** :
+- T4 : `POST /metrics` (auth par `X-Agent-Key`, lots, doublons ignorés, voir D006)
+- La base de développement est vide : créer un vrai agent avec le script avant T5
+
+---
+
 ## 2026-11-13 — Squelette de l'API et route /health
 
 **Tâche** : T1 terminée (Docker et base vérifiés), T2 terminée

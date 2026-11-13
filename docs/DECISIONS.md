@@ -30,3 +30,22 @@ supervisé en phase 4 seulement.
 
 **Date** : 2026-11-12
 **Décision** : un seul langage côté données (Python) ; le dashboard réutilise le stack web déjà maîtrisé.
+
+## D005 — Clés d'agent hachées en SHA-256
+
+**Date** : 2026-11-13
+**Contexte** : la clé `X-Agent-Key` doit être stockée hachée, et vérifiée à chaque envoi de métriques.
+**Décision** : clé aléatoire de 256 bits générée par Xool, stockée sous forme de SHA-256 (stdlib).
+**Alternatives écartées** : argon2 ou bcrypt, conçus pour des mots de passe humains : lents par
+conception et une dépendance de plus, sans gain pour une clé aléatoire longue.
+**Conséquence** : ne jamais réutiliser `hash_agent_key` pour des mots de passe d'utilisateurs.
+
+## D006 — Clé primaire `(device_id, time)` sur `metrics`
+
+**Date** : 2026-11-13
+**Contexte** : l'agent renvoie ses lots après une coupure (D002), donc l'API peut recevoir deux fois
+la même mesure.
+**Décision** : un équipement ne peut avoir qu'une mesure par instant ; la base refuse le doublon.
+**Conséquence** : `POST /metrics` (T4) devra ignorer les doublons au lieu d'échouer
+(`ON CONFLICT DO NOTHING`). Les identifiants des autres tables sont des entiers, plus compacts
+qu'un UUID dans une table de millions de lignes.
