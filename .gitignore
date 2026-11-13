@@ -13,6 +13,7 @@ build/
 *.spec
 
 # Agent
+agent/config.toml
 xool_buffer.db
 *.sqlite3
 

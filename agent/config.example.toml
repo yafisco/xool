@@ -1,0 +1,12 @@
+# Configuration de l'agent Xool.
+# Copier ce fichier en `config.toml` (même dossier) et remplir les valeurs.
+# `config.toml` contient une clé secrète : il est ignoré par Git, ne jamais le partager.
+
+# Adresse de l'API Xool. En local : 127.0.0.1 plutôt que localhost, qui est lent sous Windows.
+api_url = "http://127.0.0.1:8000"
+
+# Clé affichée une seule fois par `scripts/create_agent.py` (commence par xool_).
+agent_key = ""
+
+# Secondes entre deux mesures (de 5 à 3600).
+interval_seconds = 60
