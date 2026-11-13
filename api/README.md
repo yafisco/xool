@@ -60,6 +60,32 @@ d'environnement prime sur le fichier.
 |---|---|
 | `GET /health` | `200 {"status": "ok", "db": "ok"}` si la base répond |
 | | `503 {"status": "degraded", "db": "error"}` si la base est injoignable |
+| `POST /metrics` | `201 {"received": 2, "inserted": 2}` : lot de mesures enregistré |
+| | `401` si l'en-tête `X-Agent-Key` est absent ou invalide |
+| | `422` si une mesure est invalide (le lot entier est refusé) |
+
+### Envoyer des mesures
+
+Le corps est une **liste** de 1 à 1000 mesures. Seuls `hostname` et `time` sont obligatoires.
+
+```bash
+curl -X POST http://localhost:8000/metrics \
+  -H "Content-Type: application/json" \
+  -H "X-Agent-Key: xool_..." \
+  -d '[{"hostname": "pc-accueil", "time": "2026-11-13T12:00:00Z", "cpu": 21.5, "ram": 63.0, "disk": 80.1, "temperature": 41.0, "uptime_h": 5.2, "online": true}]'
+```
+
+| Champ | Règle |
+|---|---|
+| `hostname` | 1 à 255 caractères. L'équipement est créé s'il est inconnu pour cet agent |
+| `time` | Date ISO 8601 **avec fuseau** (`Z` ou `+00:00`) |
+| `cpu`, `ram`, `disk` | Pourcentage de 0 à 100, facultatif |
+| `temperature` | En °C, de -50 à 150, facultatif |
+| `uptime_h` | Heures depuis le démarrage, positif, facultatif |
+| `online` | `true` par défaut |
+
+Une mesure déjà reçue (même équipement, même instant) est ignorée sans erreur : `inserted` est
+alors plus petit que `received`. Un agent peut donc renvoyer un lot sans risque de doublon.
 
 ## Organisation du code
 
@@ -69,7 +95,10 @@ d'environnement prime sur le fichier.
 | `app/db.py` | Moteur SQLAlchemy async et dépendance `get_session` |
 | `app/models.py` | Tables de la base (modèles SQLAlchemy) |
 | `app/security.py` | Génération et hachage des clés d'agent |
-| `app/main.py` | Application FastAPI et routes |
+| `app/auth.py` | Authentification des agents par `X-Agent-Key` |
+| `app/schemas.py` | Forme et bornes des données reçues (Pydantic) |
+| `app/routes/` | Routes de l'API, un fichier par sujet |
+| `app/main.py` | Application FastAPI et route `/health` |
 | `migrations/` | Migrations Alembic |
 | `scripts/` | Outils en ligne de commande |
 | `tests/` | Tests pytest |
@@ -84,6 +113,6 @@ uv run ruff check . && uv run ruff format .
 Deux sortes de tests :
 
 - **sans base** (`test_health.py`, `test_security.py`) : ils passent même si Docker est arrêté ;
-- **avec base** (`test_schema.py`) : ils créent une base jetable `xool_test`, y appliquent les
+- **avec base** (`test_schema.py`, `test_metrics.py`) : ils créent une base jetable `xool_test`, y appliquent les
   migrations, puis la suppriment. La base de développement n'est jamais touchée. Si Docker est
   arrêté, ces tests sont ignorés (« skipped »), pas en échec.

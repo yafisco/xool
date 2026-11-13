@@ -4,6 +4,30 @@ Une entrée par session, la plus récente en haut.
 
 ---
 
+## 2026-11-13 — Route POST /metrics (session 3)
+
+**Tâche** : T4 terminée
+**Fait** :
+- `app/schemas.py` : mesure validée par Pydantic (CPU, RAM, disque de 0 à 100, horodatage avec
+  fuseau obligatoire, champs inconnus refusés), lot de 1 à 1000 mesures
+- `app/auth.py` : authentification par `X-Agent-Key`, comparaison du hash, 401 sinon
+- `app/routes/metrics.py` : `POST /metrics` crée l'équipement inconnu, insère le lot en ignorant
+  les doublons (D006), met à jour `agents.last_seen_at`, répond 201
+- 17 nouveaux tests (31 au total) : lot valide, clé invalide, valeurs hors bornes, lot renvoyé
+- Vérifié à la main avec `curl` sur le vrai serveur : 201, puis 0 insertion au second envoi du
+  même lot, 401 avec une fausse clé, 422 avec un CPU à 150, lignes présentes dans `metrics`
+- Dépôt poussé sur GitHub
+
+**Problèmes rencontrés** :
+- Aucun blocage. Un piège évité : créer les équipements avec `INSERT ... ON CONFLICT` à chaque
+  lot aurait consommé un identifiant par envoi. On cherche d'abord, on n'insère que les absents
+
+**Prochaine étape** :
+- Créer le vrai agent avec `scripts/create_agent.py` (la base de développement est vide)
+- T5 : agent de collecte (psutil) et envoi vers `POST /metrics`
+
+---
+
 ## 2026-11-13 — Schéma initial et migrations (session 2)
 
 **Tâche** : T3 terminée
@@ -118,5 +142,11 @@ Une entrée par session, la plus récente en haut.
   l'utilisateur pèse environ 3 Go). Faire du ménage.
 - `/health` met 60 s à répondre 503 quand la base accepte la connexion sans répondre (délai par
   défaut d'asyncpg). Ajouter un délai de connexion court (5 s) dans `app/db.py`.
+- Horloge fausse côté client : `POST /metrics` accepte n'importe quelle date, y compris dans le
+  futur. Décider d'une règle (refuser, corriger, signaler) quand on aura des agents sur le terrain.
+- Un lot contenant une seule mesure invalide est refusé en entier (422). Pour T6 : l'agent ne doit
+  pas renvoyer indéfiniment un lot que l'API refuse, sinon sa file reste bloquée.
+- Un équipement créé automatiquement reçoit le type `pc`. Prévoir de le corriger depuis le
+  dashboard, ou de laisser l'agent l'annoncer.
 - Au tout premier démarrage, le conteneur `db` passe « healthy » pendant l'initialisation, avant
   que la base accepte les connexions TCP. Sans effet ensuite, à garder en tête pour la CI.
