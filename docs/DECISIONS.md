@@ -49,3 +49,15 @@ la même mesure.
 **Conséquence** : `POST /metrics` (T4) devra ignorer les doublons au lieu d'échouer
 (`ON CONFLICT DO NOTHING`). Les identifiants des autres tables sont des entiers, plus compacts
 qu'un UUID dans une table de millions de lignes.
+
+## D007 — Configuration de l'agent dans `config.toml`
+
+**Date** : 2026-11-13
+**Contexte** : l'agent sera installé sur des postes clients, souvent sous Windows, par quelqu'un
+qui n'est pas développeur.
+**Décision** : un fichier `config.toml` à côté de l'agent (URL de l'API, clé, intervalle), lu avec
+`tomllib` de la bibliothèque standard. Une variable d'environnement non vide remplace le fichier.
+**Alternatives écartées** : un `.env` lu avec `python-dotenv`, soit une dépendance de plus à
+embarquer chez le client pour un format moins naturel sur un poste Windows.
+**Conséquence** : l'agent ne lit pas le `.env` racine, réservé à l'API et à Docker. `config.toml`
+contient la clé : il est ignoré par Git et ne doit jamais être partagé.

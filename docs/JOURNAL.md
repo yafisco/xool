@@ -4,6 +4,38 @@ Une entrée par session, la plus récente en haut.
 
 ---
 
+## 2026-11-13 — Agent de collecte et d'envoi (session 4)
+
+**Tâche** : T5 terminée
+**Fait** :
+- Dépendances de l'agent : `psutil` (mesures) et `requests` (HTTP) ; `pytest` en développement
+- `xool_agent/config.py` : `config.toml` puis variables d'environnement (D007), validation au
+  démarrage, clé masquée dans l'affichage de l'objet
+- `xool_agent/collect.py` : CPU, RAM, disque système, température si disponible, uptime, en UTC
+- `xool_agent/client.py` : envoi d'un lot à `POST /metrics`, délais de 5 s et 15 s, redirections
+  non suivies pour que la clé ne parte pas ailleurs
+- `xool_agent/main.py` : boucle à rythme fixe, logs, arrêt propre sur Ctrl+C et SIGTERM
+- 40 tests sans réseau (fausse session HTTP, fausse horloge)
+- Essai réel avec un agent temporaire : 31 mesures en 30 minutes, exactement 60 s entre deux
+  mesures ; fausse clé (401) et API coupée loggées sans arrêter l'agent
+- `agent/README.md` créé ; règle sur les secrets de `CLAUDE.md` complétée (`agent/config.toml`)
+- Agent et données d'essai supprimés : il reste l'agent `mon-pc`, sans mesure
+
+**Problèmes rencontrés** :
+- `psutil.cpu_percent` renvoie 0 au premier appel sans attente : la première mesure bloque une
+  seconde, les suivantes donnent la moyenne depuis la mesure précédente
+- Attendre toujours 60 s après chaque tour décalerait les mesures de la durée de l'envoi : la
+  boucle vise des instants fixes, et ne rattrape pas les tours manqués après une mise en veille
+- `requests` garde les en-têtes personnalisés quand il suit une redirection : `X-Agent-Key`
+  serait parti vers une autre adresse. Redirections désactivées
+- Non vérifié à la main : le Ctrl+C réel dans un terminal (couvert par un test seulement)
+
+**Prochaine étape** :
+- Mettre la clé de `mon-pc` dans `agent/config.toml` et lancer l'agent pour de vrai
+- T6 : tampon SQLite hors connexion
+
+---
+
 ## 2026-11-13 — Route POST /metrics (session 3)
 
 **Tâche** : T4 terminée
@@ -148,5 +180,13 @@ Une entrée par session, la plus récente en haut.
   pas renvoyer indéfiniment un lot que l'API refuse, sinon sa file reste bloquée.
 - Un équipement créé automatiquement reçoit le type `pc`. Prévoir de le corriger depuis le
   dashboard, ou de laisser l'agent l'annoncer.
+- L'agent ne mesure que le disque système. Une machine à plusieurs disques (ici C: et Y:) n'en
+  remonte qu'un : il faudra une mesure par disque, donc un changement de schéma.
+- Température vide sous Windows (psutil ne la lit pas). Pour la prédiction de pannes c'est une
+  donnée importante : étudier une autre source (WMI, LibreHardwareMonitor) avant la phase 3.
+- `config.toml` est cherché à côté du dossier `xool_agent/`. À revoir quand l'agent sera livré
+  en exécutable ou en service Windows, et écrire alors les logs dans un fichier en UTF-8.
+- Le `.env` local contient encore les lignes `XOOL_API_URL`, `XOOL_AGENT_KEY` et
+  `XOOL_INTERVAL_SECONDS`, que plus rien ne lit depuis D007. Sans effet, à retirer.
 - Au tout premier démarrage, le conteneur `db` passe « healthy » pendant l'initialisation, avant
   que la base accepte les connexions TCP. Sans effet ensuite, à garder en tête pour la CI.

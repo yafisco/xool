@@ -94,7 +94,9 @@ Une tâche est terminée seulement si :
 
 ## 8. Sécurité — règles non négociables
 
-- Jamais de secret dans le code ni dans Git : tout passe par `.env` (voir `.env.example`).
+- Jamais de secret dans le code ni dans Git : tout passe par `.env` (voir `.env.example`) et, pour
+  l'agent, par `agent/config.toml` (voir `agent/config.example.toml`, décision D007). Ces deux
+  fichiers sont ignorés par Git.
 - Les agents s'authentifient avec une clé (`X-Agent-Key`) stockée **hachée** en base.
 - Communautés SNMP, mots de passe d'équipements clients : chiffrés en base, jamais loggés.
 - Valider toutes les entrées avec Pydantic ; borner les valeurs (CPU 0–100, etc.).
