@@ -7,11 +7,15 @@ from pathlib import Path
 import pytest
 from alembic import command
 from alembic.config import Config
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy import URL, make_url, text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from app.config import get_settings
+from app.db import get_session
+from app.main import app
+from scripts.create_agent import create_agent
 
 API_DIR = Path(__file__).resolve().parents[1]
 
@@ -80,3 +84,22 @@ async def session(test_db_url: str) -> AsyncIterator[AsyncSession]:
             yield db_session
         await transaction.rollback()
     await engine.dispose()
+
+
+@pytest.fixture
+async def client(session: AsyncSession) -> AsyncIterator[AsyncClient]:
+    """Client HTTP branché directement sur l'application, sans serveur ni réseau.
+
+    L'API utilise la même session que le test : ce qu'elle écrit est visible par le test,
+    puis annulé à la fin.
+    """
+    app.dependency_overrides[get_session] = lambda: session
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as http:
+        yield http
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+async def agent_key(session: AsyncSession) -> str:
+    """Clé d'un agent fraîchement créé dans la base de test."""
+    return await create_agent(session, "Organisation Test", "agent-test")

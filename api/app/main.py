@@ -1,21 +1,20 @@
 """Point d'entrée de l'API Xool."""
 
 import logging
-from typing import Annotated, Literal
+from typing import Literal
 
-from fastapi import Depends, FastAPI, Response, status
+from fastapi import FastAPI, Response, status
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db import get_session
+from app.db import SessionDep
+from app.routes import metrics
 
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Xool API", version="0.1.0")
-
-SessionDep = Annotated[AsyncSession, Depends(get_session)]
+app.include_router(metrics.router)
 
 
 class Health(BaseModel):

@@ -2,7 +2,9 @@
 
 from collections.abc import AsyncIterator
 from functools import lru_cache
+from typing import Annotated
 
+from fastapi import Depends
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -29,3 +31,7 @@ async def get_session() -> AsyncIterator[AsyncSession]:
     """Dépendance FastAPI : une session par requête, fermée à la fin."""
     async with get_session_factory()() as session:
         yield session
+
+
+# À utiliser comme type d'un paramètre de route : `session: SessionDep`.
+SessionDep = Annotated[AsyncSession, Depends(get_session)]
